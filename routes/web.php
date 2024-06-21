@@ -16,3 +16,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [FileController::class, 'index'])->name('home');
+Route::get('/upload', [FileController::class, 'upload'])->name('upload');
