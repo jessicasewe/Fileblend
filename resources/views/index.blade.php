@@ -37,6 +37,9 @@
         }
         .custom-file-label {
             cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .custom-select {
             max-width: 600px;
@@ -47,24 +50,22 @@
 <body>
     <div class="container centered-container">
         <div class="text-center mb-4">
-            <h2>FileBlend - Convert and Merge Files</h2>
+            <h1 class="display-4">Welcome to FileBlend</h1>
+            <p class="lead">Convert your PDF and Word documents with ease</p>
         </div>
-
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
         <div class="card">
             <div class="card-body">
+                @if(session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
                 <form action="{{ route('upload') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
                         <div class="input-group">
                             <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="file" name="file" accept=".pdf,.docx" required>
+                                <input type="file" class="custom-file-input" id="file" name="file" accept=".pdf,.docx" required onchange="updateFileName(this)">
                                 <label class="custom-file-label" for="file">Choose file</label>
                             </div>
                             <div class="input-group-append">
@@ -82,10 +83,23 @@
                         </select>
                     </div>
                 </form>
+                
+                <!-- Display converted file and download link -->
+                @if(session('downloadLink') && session('convertedFileName'))
+                    <div class="mt-3">
+                        <p>Converted File: {{ session('convertedFileName') }}</p>
+                        <a href="{{ session('downloadLink') }}" class="btn btn-success" role="button" download>Download Converted File</a>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
-
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        function updateFileName(input) {
+            var fileName = input.files[0].name;
+            input.nextElementSibling.innerText = fileName;
+        }
+    </script>
 </body>
 </html>

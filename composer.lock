@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "359837bcf261ad75033cb979ee9f0077",
+    "content-hash": "8c49a97da5438d1dd2c8700bdf888ec4",
     "packages": [
         {
             "name": "brick/math",
@@ -134,6 +134,61 @@
                 }
             ],
             "time": "2023-12-11T17:09:12+00:00"
+        },
+        {
+            "name": "cloudmersive/cloudmersive_validate_api_client",
+            "version": "3.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Cloudmersive/Cloudmersive.APIClient.PHP.Validate.git",
+                "reference": "21d8816b5d8cbe13081f0e02d9cccff4fcc6581b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Cloudmersive/Cloudmersive.APIClient.PHP.Validate/zipball/21d8816b5d8cbe13081f0e02d9cccff4fcc6581b",
+                "reference": "21d8816b5d8cbe13081f0e02d9cccff4fcc6581b",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "guzzlehttp/guzzle": "^7.5",
+                "php": ">=7.2.5"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "~2.12",
+                "phpunit/phpunit": "^4.8",
+                "squizlabs/php_codesniffer": "~2.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Swagger\\Client\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Cloudmersive",
+                    "homepage": "https://cloudmersive.com"
+                }
+            ],
+            "homepage": "https://cloudmersive.com",
+            "keywords": [
+                "api",
+                "php",
+                "sdk",
+                "swagger"
+            ],
+            "support": {
+                "issues": "https://github.com/Cloudmersive/Cloudmersive.APIClient.PHP.Validate/issues",
+                "source": "https://github.com/Cloudmersive/Cloudmersive.APIClient.PHP.Validate/tree/v3.0.1"
+            },
+            "time": "2023-07-02T02:30:17+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -3627,6 +3682,57 @@
                 }
             ],
             "time": "2024-04-27T21:32:50+00:00"
+        },
+        {
+            "name": "smalot/pdfparser",
+            "version": "v2.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/smalot/pdfparser.git",
+                "reference": "14adf318f8620a6195c0b00d51c6a507837b9ff4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/smalot/pdfparser/zipball/14adf318f8620a6195c0b00d51c6a507837b9ff4",
+                "reference": "14adf318f8620a6195c0b00d51c6a507837b9ff4",
+                "shasum": ""
+            },
+            "require": {
+                "ext-iconv": "*",
+                "ext-zlib": "*",
+                "php": ">=7.1",
+                "symfony/polyfill-mbstring": "^1.18"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Smalot\\PdfParser\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastien MALOT",
+                    "email": "sebastien@malot.fr"
+                }
+            ],
+            "description": "Pdf parser library. Can read and extract information from pdf file.",
+            "homepage": "https://www.pdfparser.org",
+            "keywords": [
+                "extract",
+                "parse",
+                "parser",
+                "pdf",
+                "text"
+            ],
+            "support": {
+                "issues": "https://github.com/smalot/pdfparser/issues",
+                "source": "https://github.com/smalot/pdfparser/tree/v2.10.0"
+            },
+            "time": "2024-04-29T06:36:50+00:00"
         },
         {
             "name": "symfony/console",
