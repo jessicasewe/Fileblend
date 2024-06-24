@@ -8,7 +8,6 @@ use PhpOffice\PhpWord\PhpWord;
 use Illuminate\Support\Facades\Response;
 use GuzzleHttp\Client;
 use Smalot\PdfParser\Parser;
-// use Illuminate\Support\Str;
 
 class FileController extends Controller
 {
@@ -64,9 +63,9 @@ class FileController extends Controller
             case 'pdf_to_word':
                 $convertedExtension = 'docx';
                 break;
-            case 'pdf_to_csv':
-                $convertedExtension = 'csv';
-                break;
+            // case 'ppt_to_pdf':
+            //     $convertedExtension = 'csv';
+            //     break;
             case 'word_to_pdf':
                 $convertedExtension = 'pdf';
                 break;
@@ -85,9 +84,9 @@ class FileController extends Controller
             case 'pdf_to_word':
                 $this->convertPdfToWord($filePath, $convertedPath);
                 break;
-            case 'pdf_to_csv':
-                $this->convertPdfToCsv($filePath, $convertedPath);
-                break;
+            // case 'ppt_to_pdf':
+            //     $this->convertPdfToCsv($filePath, $convertedPath);
+            //     break;
             case 'word_to_pdf':
                 $this->convertWordToPdf($filePath, $convertedPath);
                 break;
@@ -112,9 +111,9 @@ class FileController extends Controller
     public function convertPdfToWordWithCloudmersive($filePath)
     {
         $client = new \GuzzleHttp\Client();
-        $url = 'https://api.cloudmersive.com/convert/pdf/to/docx';
+        $url = env('CLOUDMERSIVE_API_URL', 'https://api.cloudmersive.com/convert/pdf/to/docx');
         $headers = [
-            'Apikey' => env('CLOUDMERSIVE_API_KEY'),
+            'Apikey' => 'cb9cec2e-96e5-407e-929b-95038d4de645',
             'Content-Type' => 'application/pdf'
         ];
         $body = fopen($filePath, 'r');
@@ -153,14 +152,28 @@ class FileController extends Controller
         }
     }
 
-    private function convertPdfToCsv($sourcePath, $targetPath)
-    {
+    // private function convertPptToPdf($sourcePath, $targetPath)
+    // {
        
-    }
+    // }
 
     private function convertWordToPdf($sourcePath, $targetPath)
     {
-        
+        $phpWord = \PhpOffice\PhpWord\IOFactory::load($sourcePath);
+
+        $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
+        $htmlWriter->save(storage_path('app/html'));
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml(file_get_contents(storage_path('app/html')));
+
+        $dompdf->render();
+
+        file_put_contents($targetPath, $dompdf->output());
+
+        if (file_exists(storage_path('app/html'))) {
+            unlink(storage_path('app/html'));
+        }
     }
 
     private function convertWordToCsv($sourcePath, $targetPath)

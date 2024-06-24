@@ -77,7 +77,7 @@
                         <label for="conversion_type">Select conversion type</label>
                         <select name="conversion_type" class="form-control custom-select" required>
                             <option value="pdf_to_word">PDF to Word</option>
-                            <option value="pdf_to_csv">PDF to CSV</option>
+                            <option value="ppt_to_pdf">PPT to PDF</option>
                             <option value="word_to_pdf">Word to PDF</option>
                             <option value="word_to_csv">Word to CSV</option>
                         </select>
