@@ -12,7 +12,8 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
-        "phpoffice/phpspreadsheet": "^2.1",
+        "phpoffice/phppresentation": "*",
+        "phpoffice/phpspreadsheet": "2.1",
         "phpoffice/phpword": "^1.2",
         "smalot/pdfparser": "^2.10"
     },

@@ -8,6 +8,11 @@ use PhpOffice\PhpWord\PhpWord;
 use Illuminate\Support\Facades\Response;
 use GuzzleHttp\Client;
 use Smalot\PdfParser\Parser;
+use PhpOffice\PhpPresentation\PhpPresentation;
+use Exception;
+use PhpOffice\PhpPresentation\Slide;
+use PhpOffice\PhpPresentation\IOFactory;
+
 
 class FileController extends Controller
 {
@@ -19,7 +24,7 @@ class FileController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:pdf,docx|max:10240',
+            'file' => 'required|mimes:pdf,docx,pptx|max:10240',
             'conversion_type' => 'required|string'
         ]);
 
@@ -63,14 +68,14 @@ class FileController extends Controller
             case 'pdf_to_word':
                 $convertedExtension = 'docx';
                 break;
-            // case 'ppt_to_pdf':
-            //     $convertedExtension = 'csv';
-            //     break;
+            case 'pdf_to_pptx':
+                $convertedExtension = 'pptx';
+                break;
             case 'word_to_pdf':
                 $convertedExtension = 'pdf';
                 break;
-            case 'word_to_csv':
-                $convertedExtension = 'csv';
+            case 'pptx_to_pdf':
+                $convertedExtension = 'pdf';
                 break;
             default:
                 return back()->with('error', 'Invalid conversion type.');
@@ -79,19 +84,18 @@ class FileController extends Controller
         $convertedFileName = $originalFilename . '.' . $convertedExtension;
         $convertedPath = storage_path('app/converted/') . $convertedFileName;
 
-
         switch ($type) {
             case 'pdf_to_word':
                 $this->convertPdfToWord($filePath, $convertedPath);
                 break;
-            // case 'ppt_to_pdf':
-            //     $this->convertPdfToCsv($filePath, $convertedPath);
-            //     break;
+            case 'pdf_to_pptx':
+                $this->convertPdfToPptx($filePath, $convertedPath);
+                break;
             case 'word_to_pdf':
                 $this->convertWordToPdf($filePath, $convertedPath);
                 break;
-            case 'word_to_csv':
-                $this->convertWordToCsv($filePath, $convertedPath);
+            case 'pptx_to_pdf':
+                $this->convertPptxToPdf($filePath, $convertedPath);
                 break;
             default:
                 return back()->with('error', 'Invalid conversion type.');
@@ -152,10 +156,80 @@ class FileController extends Controller
         }
     }
 
-    // private function convertPptToPdf($sourcePath, $targetPath)
-    // {
-       
-    // }
+    public function convertPdfToPptxWithCloudmersive($filePath)
+    {
+        $client = new \GuzzleHttp\Client();
+        $url = 'https://api.cloudmersive.com/convert/pdf/to/pptx';
+        $headers = [
+            'Apikey' => 'cb9cec2e-96e5-407e-929b-95038d4de645',
+            'Content-Type' => 'application/pdf'
+        ];
+        $body = fopen($filePath, 'r');
+
+        $response = $client->request('POST', $url, [
+            'headers' => $headers,
+            'body' => $body
+        ]);
+
+        if ($response->getStatusCode() == 200) {
+            $convertedFilePath = storage_path('app/converted/') . pathinfo($filePath, PATHINFO_FILENAME) . '.pptx';
+            file_put_contents($convertedFilePath, $response->getBody()->getContents());
+
+            Log::info('Cloudmersive API call successful', ['time' => now()]);
+
+            return $convertedFilePath;
+        } else {
+            Log::error('Cloudmersive API call failed', [
+                'time' => now(),
+                'response' => $response->getBody()->getContents()
+            ]);
+            return null;
+        }
+    }
+
+
+    private function convertPdfToPptx($sourcePath, $targetPath)
+    {
+        // Attempt to convert using Cloudmersive API
+        $convertedFilePath = $this->convertPdfToPptxWithCloudmersive($sourcePath);
+
+        // If Cloudmersive conversion fails, fall back to local conversion
+        if (!$convertedFilePath) {
+            Log::info('Cloudmersive conversion failed, attempting local conversion.');
+
+            $parser = new \Smalot\PdfParser\Parser();
+            $pdf = $parser->parseFile($sourcePath);
+            $text = $pdf->getText();
+
+            $phpPresentation = new PhpPresentation();
+            $slide = $phpPresentation->createSlide();
+
+            $shape = $slide->createRichTextShape()
+                ->setHeight(720)
+                ->setWidth(960)
+                ->setOffsetX(10)
+                ->setOffsetY(10);
+
+            $textRun = $shape->createTextRun($text);
+            $textRun->getFont()->setBold(false);
+
+            $writer = IOFactory::createWriter($phpPresentation, 'PowerPoint2007');
+            $writer->save($targetPath);
+
+            Log::info('Local conversion completed', ['targetPath' => $targetPath]);
+        }
+
+        if (file_exists($targetPath) && filesize($targetPath) > 0) {
+            Log::info('Conversion successful', ['targetPath' => $targetPath]);
+            return $targetPath;
+        } else {
+            Log::error('Conversion resulted in an empty file or failed', ['targetPath' => $targetPath]);
+            return null;
+        }
+    }
+
+
+
 
     private function convertWordToPdf($sourcePath, $targetPath)
     {
@@ -176,10 +250,58 @@ class FileController extends Controller
         }
     }
 
-    private function convertWordToCsv($sourcePath, $targetPath)
+    public function convertPptxToPdfWithCloudmersive($filePath)
     {
-        
+        $client = new \GuzzleHttp\Client();
+        $url = 'https://api.cloudmersive.com/convert/pptx/to/pdf';
+        $headers = [
+              'Apikey' => 'cb9cec2e-96e5-407e-929b-95038d4de645',
+              'Content-Type' => 'application/ppxt'
+         ];
+        $body = fopen($filePath, 'r');
+
+        $response = $client->request('POST', $url, [
+            'headers' => $headers,
+            'body' => $body
+        ]);
+
+        if ($response->getStatusCode() == 200) {
+            $convertedFilePath = storage_path('app/converted/') . pathinfo($filePath, PATHINFO_FILENAME) . '.pdf';
+            file_put_contents($convertedFilePath, $response->getBody()->getContents());
+
+            Log::info('Cloudmersive API call successful', ['time' => now()]);
+
+            return $convertedFilePath;
+        } else {
+            Log::error('Cloudmersive API call failed', [
+                'time' => now(),
+                'response' => $response->getBody()->getContents()
+            ]);
+            return null;
+        }
     }
+
+    private function convertPptxToPdf($sourcePath, $targetPath)
+    {
+        $convertedFilePath = $this->convertPptxToPdfWithCloudmersive($sourcePath);
+
+        if ($convertedFilePath) {
+            Log::info('Cloudmersive conversion successful', ['targetPath' => $convertedFilePath]);
+            return $convertedFilePath;
+        } else {
+            Log::info('Cloudmersive conversion failed, attempting local conversion.');
+        }
+
+        if (file_exists($targetPath) && filesize($targetPath) > 0) {
+            Log::info('Local conversion successful', ['targetPath' => $targetPath]);
+            return $targetPath;
+        } else {
+            Log::error('Local conversion resulted in an empty file or failed', ['targetPath' => $targetPath]);
+            return null;
+        }
+    }
+
+
 
     public function download($path)
     {
@@ -191,5 +313,8 @@ class FileController extends Controller
             abort(404, 'File not found.');
         }
     }
+    
 }
+
+
 
