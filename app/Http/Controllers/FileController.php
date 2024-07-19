@@ -12,6 +12,11 @@ use PhpOffice\PhpPresentation\PhpPresentation;
 use Exception;
 use PhpOffice\PhpPresentation\Slide;
 use PhpOffice\PhpPresentation\IOFactory;
+use setasign\Fpdi\Fpdi;
+use ZipArchive;
+use Illuminate\Support\Facades\File;
+
+
 
 
 class FileController extends Controller
@@ -21,10 +26,15 @@ class FileController extends Controller
         return view('index');
     }
 
+    public function show()
+    {
+        return view('index');
+    }
+
     public function upload(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:pdf,docx,pptx|max:10240',
+            'file' => 'required|mimes:pdf,docx,pptx,zip|max:10240', // Validate PDF, DOCX, PPTX, ZIP files up to 10MB
             'conversion_type' => 'required|string'
         ]);
 
@@ -77,6 +87,9 @@ class FileController extends Controller
             case 'pptx_to_pdf':
                 $convertedExtension = 'pdf';
                 break;
+            case 'split_pdf':
+                $convertedExtension = 'zip';
+                break;
             default:
                 return back()->with('error', 'Invalid conversion type.');
         }
@@ -96,6 +109,9 @@ class FileController extends Controller
                 break;
             case 'pptx_to_pdf':
                 $this->convertPptxToPdf($filePath, $convertedPath);
+                break;
+            case 'split_pdf':
+                $convertedPath = $this->splitPdfIntoPages($request);
                 break;
             default:
                 return back()->with('error', 'Invalid conversion type.');
@@ -228,9 +244,6 @@ class FileController extends Controller
         }
     }
 
-
-
-
     private function convertWordToPdf($sourcePath, $targetPath)
     {
         $phpWord = \PhpOffice\PhpWord\IOFactory::load($sourcePath);
@@ -301,19 +314,94 @@ class FileController extends Controller
         }
     }
 
-
-
-    public function download($path)
+    public function splitPdfIntoPagesWithCloudmersive($filePath)
     {
-        $filePath = storage_path('app/converted/' . $path);
+        $client = new \GuzzleHttp\Client();
+        $url = 'https://api.cloudmersive.com/convert/split/pdf';
+        $headers = [
+            'Apikey' => 'cb9cec2e-96e5-407e-929b-95038d4de645',
+            'Content-Type' => 'application/pdf'
+        ];
+        $body = fopen($filePath, 'r');
 
-        if (file_exists($filePath)) {
-            return Response::download($filePath)->deleteFileAfterSend(true);
+        $response = $client->request('POST', $url, [
+            'headers' => $headers,
+            'body' => $body
+        ]);
+
+        if ($response->getStatusCode() == 200){
+            $convertedFilePath = storage_path('app/converted/') . pathinfo($filePath, PATHINFO_FILENAME) . '.zip';
+            $writeResult = file_put_contents($convertedFilePath, $response->getBody()->getContents());
+
+            if ($writeResult === false) {
+                Log::error('Failed to write ZIP file', ['time' => now()]);
+                return null;
+            }
+
+            Log::info('Cloudmersive API call successful', ['time' => now()]);
+
+            return $convertedFilePath;
         } else {
-            abort(404, 'File not found.');
+            Log::error('Cloudmersive API call failed', [
+                'time' => now(),
+                'response' => $response->getBody()->getContents()
+            ]);
+            return null;
         }
     }
-    
+
+    private function splitPdfIntoPages(Request $request)
+    {
+        $path = $request->input('file');
+
+        $pdf = new Fpdi();
+
+        try {
+            $pageCount = $pdf->setSourceFile(storage_path('app/' . $path));
+            $zip = new ZipArchive();
+            $zipFileName = storage_path('app/converted/') . pathinfo($path, PATHINFO_FILENAME) . '.zip';
+
+            if ($zip->open($zipFileName, ZipArchive::CREATE) !== true) {
+                throw new Exception('Cannot create zip file');
+            }
+
+            for ($pageNumber = 1; $pageNumber <= $pageCount; $pageNumber++) {
+                $pdf->AddPage();
+                $pdf->setSourceFile(storage_path('app/' . $path));
+                $templateId = $pdf->importPage($pageNumber);
+                $pdf->useTemplate($templateId, 0, 0, 210);
+
+                ob_start();
+                $pdf->Output('S');
+                $pageContent = ob_get_clean();
+
+                $zip->addFromString('page_' . $pageNumber . '.pdf', $pageContent);
+            }
+
+            $zip->close();
+
+            return $zipFileName;
+        } catch (Exception $e) {
+            Log::error('Error splitting PDF', ['message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    public function download(Request $request)
+    {
+        $path = $request->query('path');
+
+        $file = storage_path('app/converted/' . $path);
+
+        if (file_exists($file)) {
+            return Response::download($file);
+        } else {
+            return back()->with('error', 'File not found.');
+        }
+    }
+
+
+
 }
 
 

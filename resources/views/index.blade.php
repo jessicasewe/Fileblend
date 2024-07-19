@@ -80,11 +80,10 @@
                             <option value="pdf_to_pptx">PDF to PPT</option>
                             <option value="word_to_pdf">Word to PDF</option>
                             <option value="pptx_to_pdf">PPTX to PDF</option>
+                            <option value="split_pdf">Split PDF</option>
                         </select>
                     </div>
                 </form>
-                
-                <!-- Display converted file and download link -->
                 @if(session('downloadLink') && session('convertedFileName'))
                     <div class="mt-3">
                         <p>Converted File: {{ session('convertedFileName') }}</p>
@@ -97,9 +96,25 @@
     
     <script>
         function updateFileName(input) {
-            var fileName = input.files[0].name;
-            input.nextElementSibling.innerText = fileName;
-        }
+        var fileName = input.files[0].name;
+        input.nextElementSibling.innerText = fileName;
+    }
+
+        @php
+        $files = session('filePaths', []); 
+        @endphp
+
+    var files = @json($files);
+
+    files.forEach(function(file) {
+        var link = document.createElement('a');
+        link.href = file;
+        link.download = file.split('/').pop();
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
     </script>
 </body>
 </html>

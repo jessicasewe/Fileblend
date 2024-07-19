@@ -19,3 +19,5 @@ Route::get('/', [FileController::class, 'index'])->name('home');
 Route::post('/upload', [FileController::class, 'upload'])->name('upload');
 Route::get('/convert', [FileController::class, 'convert'])->name('convert');
 Route::get('/download/{path}', [FileController::class, 'download'])->name('download');
+Route::post('/split-pdf', [FileController::class, 'splitPdfIntoPages'])->name('split.pdf');
+
